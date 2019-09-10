@@ -21,6 +21,8 @@ public class NetworkManager {
 
     private static final NetworkManager globalInstance = new NetworkManager();
 
+    private Map<Object, NetworkConnectBinder> networkConnectBindMap;
+
     private Application mApplication;
 
     private ObserversManager mObserversManager;
@@ -40,17 +42,18 @@ public class NetworkManager {
         if (mApplication != null) {
             return;
         }
+
         this.mApplication = application;
-        NetWorkCallbackImpl mCallback = new NetWorkCallbackImpl();
-        ConnectivityManager connectivityManager = (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (connectivityManager != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            NetWorkCallbackImpl mCallback = new NetWorkCallbackImpl();
+            ConnectivityManager connectivityManager = (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (connectivityManager != null) {
                 NetworkRequest request = new NetworkRequest.Builder().build();
                 connectivityManager.registerNetworkCallback(request, mCallback);
-            } else {
-                IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-                application.registerReceiver(new NetworkBroadcastReceiver(), intentFilter);
             }
+        } else {
+            IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+            application.registerReceiver(new NetworkBroadcastReceiver(), intentFilter);
         }
     }
 
@@ -75,7 +78,6 @@ public class NetworkManager {
         return netStatus;
     }
 
-    private Map<Object, NetworkConnectBinder> networkConnectBindMap;
     public void register(Object target) {
         if (networkConnectBindMap.containsKey(target)) {
             return;
