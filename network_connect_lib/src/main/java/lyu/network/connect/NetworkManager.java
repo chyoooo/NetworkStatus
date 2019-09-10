@@ -2,6 +2,7 @@ package lyu.network.connect;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkRequest;
 import android.os.Build;
@@ -10,14 +11,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lyu.network.connect.core.NetWorkCallbackImpl;
+import lyu.network.connect.core.NetworkBroadcastReceiver;
+import lyu.network.connect.observer.NetworkConnectObserver;
+import lyu.network.connect.observer.NetworkObservable;
+import lyu.network.connect.observer.ObserversManager;
+
 public class NetworkManager {
 
     private static final NetworkManager globalInstance = new NetworkManager();
 
-    private NetWorkCallbackImpl mCallback;
+    private Application mApplication;
+
+    private ObserversManager mObserversManager;
+
+    private NetStatus netStatus = NetStatus.NONE;
 
     private NetworkManager(){
         networkConnectBindMap = new HashMap<>();
+        mObserversManager = new ObserversManager();
     }
 
     public static NetworkManager getInstance() {
@@ -25,28 +37,42 @@ public class NetworkManager {
     }
 
     public void init(Application application) {
-        if (mCallback != null) {
+        if (mApplication != null) {
             return;
         }
-        mCallback = NetWorkCallbackImpl.getInstance();
-
+        this.mApplication = application;
+        NetWorkCallbackImpl mCallback = new NetWorkCallbackImpl();
         ConnectivityManager connectivityManager = (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (connectivityManager != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                connectivityManager.registerDefaultNetworkCallback(mCallback);
-            } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 NetworkRequest request = new NetworkRequest.Builder().build();
                 connectivityManager.registerNetworkCallback(request, mCallback);
+            } else {
+                IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+                application.registerReceiver(new NetworkBroadcastReceiver(), intentFilter);
             }
         }
     }
 
+    public Application getApplication() {
+        return mApplication;
+    }
+
     public void addObservers(Object object, List<NetworkConnectObserver> observers) {
-        mCallback.addObservers(object, observers);
+        mObserversManager.addObservers(object, observers);
     }
 
     public void removeObservers(Object object) {
-        mCallback.removeObservers(object);
+        mObserversManager.removeObservers(object);
+    }
+
+    public void subscribe(NetStatus netStatus) {
+        this.netStatus = netStatus;
+        mObserversManager.subscribe(netStatus);
+    }
+
+    public NetStatus getNetStatus() {
+        return netStatus;
     }
 
     private Map<Object, NetworkConnectBinder> networkConnectBindMap;

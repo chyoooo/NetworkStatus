@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -82,7 +83,7 @@ public class NetworkConnectProcessor extends AbstractProcessor {
 
         ClassName netSubscribeType = ClassName.get("lyu.network.connect.annotation","NetSubscribe");
         ClassName netStatusType = ClassName.get("lyu.network.connect","NetStatus");
-        ClassName networkConnectObserver = ClassName.get("lyu.network.connect", "NetworkConnectObserver");
+        ClassName networkConnectObserver = ClassName.get("lyu.network.connect.observer", "NetworkConnectObserver");
         ClassName networkManager =  ClassName.get("lyu.network.connect", "NetworkManager");
         ClassName networkConnectBinder = ClassName.get("lyu.network.connect", "NetworkConnectBinder");
 
@@ -122,15 +123,26 @@ public class NetworkConnectProcessor extends AbstractProcessor {
                     listenerBuilder = TypeSpec.anonymousClassBuilder("$T.$L", netSubscribeType, result);
                 }
 
+                MethodSpec.Builder updateMethodBuilder = MethodSpec.methodBuilder("update")
+                        .addAnnotation(Override.class)
+                        .addModifiers(Modifier.PUBLIC)
+                        .addParameter(Observable.class, "observer")
+                        .addParameter(Object.class, "netStatus")
+                        .returns(void.class);
+                MethodSpec updateMethod;
+                if (parameterName == null) {
+                    updateMethod = updateMethodBuilder
+                            .addStatement("$N.$N()", TARGET, methodName)
+                            .build();
+                } else {
+                    updateMethod = updateMethodBuilder
+                            .addStatement("$N.$N(($T)$N)", TARGET, methodName, netStatusType, "netStatus")
+                            .build();
+                }
+
                 TypeSpec listener = listenerBuilder
                     .superclass(networkConnectObserver)
-                    .addMethod(MethodSpec.methodBuilder("connect")
-                            .addAnnotation(Override.class)
-                            .addModifiers(Modifier.PUBLIC)
-                            .addParameter(netStatusType, "netStatus")
-                            .returns(void.class)
-                            .addStatement("$N.$N($N)", TARGET, methodName, (parameterName == null ? "" : "netStatus"))
-                            .build())
+                    .addMethod(updateMethod)
                     .build();
 
 

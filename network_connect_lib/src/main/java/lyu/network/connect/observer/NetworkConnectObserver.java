@@ -1,8 +1,10 @@
-package lyu.network.connect;
+package lyu.network.connect.observer;
+
+import java.util.Observer;
 
 import lyu.network.connect.annotation.NetSubscribe;
 
-public abstract class NetworkConnectObserver {
+public abstract class NetworkConnectObserver implements Observer {
 
     private NetSubscribe netSubscribe;
 
@@ -10,10 +12,8 @@ public abstract class NetworkConnectObserver {
         this.netSubscribe = netSubscribe;
     }
 
-
     public NetSubscribe getNetworkType() {
         return netSubscribe;
     }
 
-    public abstract void connect(NetStatus netStatus);
 }
