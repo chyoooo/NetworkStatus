@@ -1,0 +1,2 @@
+# Network_Connect
+像用EventBus一样使用网络状态切换监听

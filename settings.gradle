@@ -1,0 +1,2 @@
+include ':app', ':network_connect_lib', ':network_connect_annotation', ':network_connect_compiler'
+rootProject.name='Network_Connect'
